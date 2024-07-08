@@ -68,49 +68,50 @@ void InitializeSite(std::vector<SiteInfo>& sites, std::vector<EventAtom>& atoms,
 	int num_atoms = 0;
 	int site_id = 0;
 	int N = sites.size();
-	int M = lattice_x * lattice_y * 20  ; // 下から1000個分の粒子
+	int M = lattice_x * lattice_y * 20; // 下から20層分の粒子
 
-	// x方向を5等分
-	int region_width_x = lattice_x / 5;
-	// z方向を5等分 (z > 10の領域のみ)
-	int region_height_z = (lattice_z - 10) / 5;
+	// 斜め方向の区切りを定義
+	int num_divisions = 5; // 区分の数
+	int diagonal_width = (lattice_x + lattice_z - 10) / num_divisions;
 
-	// 各領域の粒子配置フラグ (5x5の2次元配列)
-	std::vector<std::vector<bool>> region_flags(5, std::vector<bool>(5, true));
+	// 各区分の粒子配置フラグ (5x5の2次元配列)
+	std::vector<std::vector<bool>> region_flags(num_divisions, std::vector<bool>(num_divisions, true));
 
-	// ここで各領域のフラグを設定します
-	//1段目
-	region_flags[0][0] = false;
-	//region_flags[1][0] = false;
-	//region_flags[2][0] = false;
-	//region_flags[3][0] = false;
-	region_flags[4][0] = false;
-	//1段目
-	region_flags[0][1] = false;
-	//region_flags[1][1] = false;
-	region_flags[2][1] = false;
-	//region_flags[3][1] = false;
-	region_flags[4][1] = false;
-	//1段目
-	region_flags[0][2] = false;
-	//region_flags[1][2] = false;
-	//region_flags[2][2] = false;
-	//region_flags[3][2] = false;
-	region_flags[4][2] = false;
-	//1段目
-	region_flags[0][3] = false;
-	region_flags[1][3] = false;
-	//region_flags[2][3] = false;
-	region_flags[3][3] = false;
-	region_flags[4][3] = false;
-	//1段目
-	region_flags[0][4] = false;
-	region_flags[1][4] = false;
-	region_flags[2][4] = false;
-	region_flags[3][4] = false;
-	region_flags[4][4] = false;
+	// ここで各区分のフラグを設定します
+	// 例: region_flags[i][j] = false; とすると、その区分に粒子を配置しません
 	
+	region_flags[0][1] = false;
+	//region_flags[0][2] = false;
+	
+	region_flags[1][0] = false;
+	//region_flags[1][1] = false;
+	//region_flags[1][2] = false;
+	region_flags[1][3] = false;
+	
+	region_flags[2][0] = false;
+	//region_flags[2][1] = false;
+	region_flags[2][2] = false;
+	region_flags[2][3] = false;
+	region_flags[2][4] = false;
+	region_flags[3][0] = false;
+	region_flags[3][1] = false;
+	region_flags[3][2] = false;
+	region_flags[3][3] = false;
+	
+	region_flags[4][1] = false;
+	region_flags[4][2] = false;
+	
+
 	int sheet_thickness = 2; // シートの厚さ（y軸方向の粒子を配置する範囲）
+
+	auto getDiagonalRegion = [&](int ix, int iz) {
+		int region_45 = (ix + iz - 10) / diagonal_width;
+		int region_neg45 = (ix - iz + lattice_z - 10) / diagonal_width;
+		return std::make_pair(
+			std::max(0, std::min(num_divisions - 1, region_45)),
+			std::max(0, std::min(num_divisions - 1, region_neg45))
+		);
+		};
 
 	for (int i = 0; i < N; ++i) {
 		auto& a = sites[i];
@@ -120,19 +121,17 @@ void InitializeSite(std::vector<SiteInfo>& sites, std::vector<EventAtom>& atoms,
 		int iz = unit_cell_id / (lattice_x * lattice_y);
 
 		if (iy < sheet_thickness) {
-			// 既存の配置ロジック
 			if (iz < 10) {
-				// 下から1000個分の粒子はそのまま敷き詰める
+				// 下から20層分の粒子はそのまま敷き詰める
 				a.exist_atom_id = num_atoms;
 				atoms.push_back(EventAtom{ num_atoms, site_id });
 				++num_atoms;
 			}
 			else {
-				// z > 10の領域を25個のエリアに分割
-				int region_x = ix / region_width_x;
-				int region_z = (iz - 10) / region_height_z;
+				// z > 10の領域を斜めの区分に分割
+				auto [region_45, region_neg45] = getDiagonalRegion(ix, iz);
 
-				if (region_flags[region_x][region_z] && dist(mt) < material_density) {
+				if (region_flags[region_45][region_neg45] && dist(mt) < material_density) {
 					a.exist_atom_id = num_atoms;
 					atoms.push_back(EventAtom{ num_atoms, site_id });
 					++num_atoms;
@@ -141,6 +140,9 @@ void InitializeSite(std::vector<SiteInfo>& sites, std::vector<EventAtom>& atoms,
 					a.exist_atom_id = SiteInfo::ATOM_NONE;
 				}
 			}
+		}
+		else {
+			a.exist_atom_id = SiteInfo::ATOM_NONE;
 		}
 		++site_id;
 	}
