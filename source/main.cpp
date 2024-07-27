@@ -9,7 +9,8 @@
 #include <chrono>
 
 inline static const double kbT = 0.3;  //0.034から0.394?//
-inline static const double C = 3.15;
+inline static const double D = 0.347;
+inline static const double C = (8.9 - 8 * D) / sqrt(8);
 inline static const double material_density = 1.0;
 inline static const double material_density_2 = 1.0;
 
@@ -267,7 +268,7 @@ int FindoutMoveTarget(EventAtom& a, const std::vector<SiteInfo>& sites, int latt
 			N_current++;
 		}
 	}
-	double dE_C_from_A = + C * sqrt((double)N_current);
+	double dE_C_from_A = D * (double)N_current + C * sqrt((double)N_current);
 	//0-(-C*rootN)
 
 	// 周辺8サイトについて、各サイトの周辺原子数を数えて、その平方根をE_aに加算
@@ -288,7 +289,7 @@ int FindoutMoveTarget(EventAtom& a, const std::vector<SiteInfo>& sites, int latt
 		}
 
 		if (N_neighbor > 0) {
-			dE_C_from_A += - C * (sqrt((double)(N_neighbor - 1)) - sqrt((double)N_neighbor));
+			dE_C_from_A +=  -D * ((double)(N_neighbor - 1) - (double)N_neighbor) - C * (sqrt((double)(N_neighbor - 1)) - sqrt((double)N_neighbor));
 		}
 	}
 
@@ -323,16 +324,10 @@ int FindoutMoveTarget(EventAtom& a, const std::vector<SiteInfo>& sites, int latt
 				}
 			}
 
-			double dE_B_from_C;
-			if (N_target == 0) {
-				//N_targetが0の時、非常に高いエネルギー障壁を設定
-				dE_B_from_C = 1e10; // 非常に大きな正の数
-			}
-			else {
-				dE_B_from_C = -C * (sqrt((double)N_target + 1));
-			}
+			double dE_B_from_C= -D * (double)N_target - C * (sqrt((double)N_target));
+			
 
-			//double dE_B_from_C = - C * (sqrt((double)N_target + 1));
+			
 			
 			// 周辺8サイトについて、各サイトの周辺原子数を数えて、その平方根をE_bに加算
 			for (const auto& neighbor_id : surround_b) {
@@ -349,7 +344,7 @@ int FindoutMoveTarget(EventAtom& a, const std::vector<SiteInfo>& sites, int latt
 					}
 				}
 
-				dE_B_from_C += - C * (sqrt((double)N_target + 1) - sqrt((double)N_target));
+				dE_B_from_C +=  -D * ((double)N_neighbor + 1 - (double)N_neighbor) - C * (sqrt((double)N_neighbor + 1) - sqrt((double)N_neighbor));
 
 			}
 
@@ -550,6 +545,15 @@ int main(int argc, char* argv[]) {
 	//粒子の移動のログを出力
 	logger.Flush(fp);
 	fclose(fp);
-	
+
+	//経過時間の出力
+{
+	FILE* fp = fopen("elapse_time.txt", "w");
+	const int i_end = time_list.size();
+	for (int i = 0; i < i_end; ++i) {
+		fprintf(fp, "%d\t%.15f\n", i, time_list[i]);
+	}
+	fclose(fp);
+}
 	return 0;
 }
