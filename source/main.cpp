@@ -460,6 +460,8 @@ int main(int argc, char* argv[]) {
 	const unsigned int seed = 82109832;
 	std::mt19937 mt(seed);
 	std::uniform_real_distribution<double> dist(0.0,1.0);
+	double elapse_time = 0.0;
+	std::vector<double> time_list;
 
 	for (int64_t istep = 1; istep <= STEPS; ++istep) {
 		//(1)イベントを起こす//
