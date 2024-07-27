@@ -417,7 +417,7 @@ int main(int argc, char* argv[]) {
 	printf("Simple KMC start--------------------\n");
 	// 開始時刻を記録
 	auto start_time = std::chrono::high_resolution_clock::now();
-	const int64_t STEPS = 1000000;
+	const int64_t STEPS = 100000;
 	const int lattice_x = 50;
 	const int lattice_y = 3;
 	const int lattice_z = 60;
@@ -532,9 +532,11 @@ int main(int argc, char* argv[]) {
 
 			}
 		}
-		
-		// 10000ステップごとに情報を表示
-		if (istep % 10000 == 0) {
+		//時間の積算
+		elapse_time += 1.0 / total_ratio;	
+		time_list.push_back(elapse_time);
+		// 100000ステップごとに情報を表示
+		if (istep % 100000 == 0) {
 			auto current_time = std::chrono::high_resolution_clock::now();
 			auto duration = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time);
 
