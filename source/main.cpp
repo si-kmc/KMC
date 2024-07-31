@@ -344,8 +344,14 @@ int FindoutMoveTarget(EventAtom& a, const std::vector<SiteInfo>& sites, int latt
 					}
 				}
 
-				dE_B_from_C +=  -D * ((double)N_neighbor + 1 - (double)N_neighbor) - C * (sqrt((double)N_neighbor + 1) - sqrt((double)N_neighbor));
-
+				//dE_B_from_C +=  -D * ((double)N_neighbor + 1 - (double)N_neighbor) - C * (sqrt((double)N_neighbor + 1) - sqrt((double)N_neighbor));
+				// N_neighbor が 0 の場合、dE_B_from_C を 0 に設定
+				if (N_neighbor == 0) {
+					dE_B_from_C = 0;
+				}
+				else {
+				dE_B_from_C += -D * ((double)N_neighbor + 1 - (double)N_neighbor) - C * (sqrt((double)N_neighbor + 1) - sqrt((double)N_neighbor));
+				}
 			}
 
 			double dE_B_from_A = dE_B_from_C + dE_C_from_A;
